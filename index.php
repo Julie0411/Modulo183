@@ -2,9 +2,9 @@
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     if ($username !== '') {
-        $username = substr($username, 0, 50); // limite sicurezza
+        $username = substr($username, 0, 50);
         setcookie('minisocial_username', $username, [
-            'expires' => time() + 60*60*24*30, // 30 giorni
+            'expires' => time() + 60*60*24*30,
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax'

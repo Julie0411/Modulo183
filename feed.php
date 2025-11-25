@@ -91,7 +91,7 @@ if ($result) {
             <div class="card mb-3">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-muted">
-                        <?=htmlspecialchars($p['user_name'])?> (ID #<?=$p['post_id']?>)
+                        <?=htmlspecialchars($p['user_name'])?>
                     </h6>
                     <p class="card-text"><?=nl2br(htmlspecialchars($p['post_comment']))?></p>
 

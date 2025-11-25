@@ -1,21 +1,48 @@
 <?php
+require 'db.php';
+
+session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
-    if ($username !== '') {
-        $username = substr($username, 0, 50);
-        setcookie('minisocial_username', $username, [
-            'expires' => time() + 60*60*24*30,
-            'path' => '/',
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-        header('Location: feed.php');
-        exit;
+    $password = trim(isset($_POST['password']) ? $_POST['password'] : '');
+
+    if ($username === '' || $password === '') {
+        $error = 'Compila tutti i campi.';
     } else {
-        $error = 'Inserisci uno username valido.';
+        $mysqli = db_connect();
+
+        $stmt = $mysqli->prepare("SELECT id, password_hash FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows === 1) {
+
+            $stmt->bind_result($id, $password_hash);
+            $stmt->fetch();
+
+            if (password_verify($password, $password_hash)) {
+
+                $_SESSION['user_id'] = $id;
+                $_SESSION['username'] = $username;
+
+                header("Location: feed.php");
+                exit;
+
+            } else {
+                $error = "Password errata.";
+            }
+
+        } else {
+            $error = "Utente non trovato.";
+        }
     }
 }
 ?>
+
+
 <!doctype html>
 <html lang="it">
 <head>
@@ -38,6 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <div class="mb-3">
                 <label for="username" class="form-label">Nome utente</label>
                 <input type="text" class="form-control" id="username" name="username" maxlength="50" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" maxlength="50" required>
               </div>
               <button type="submit" class="btn btn-primary">Entra</button>
             </form>

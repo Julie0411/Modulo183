@@ -1,38 +1,60 @@
 <?php
-require_once 'db.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$username = isset($_COOKIE['minisocial_username']) ? $_COOKIE['minisocial_username'] : null;
-if (!$username) {
+require 'db.php';
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit;
 }
 
 $mysqli = db_connect();
+$user_id = $_SESSION['user_id'];
+$username = $_SESSION['username'];
+$error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $content = trim(isset($_POST['content']) ? $_POST['content'] : '');
-    if ($content !== '') {
-        $stmt = $mysqli->prepare('INSERT INTO Post (user_name, post_comment) VALUES (?, ?)');
-        $stmt->bind_param('ss', $username, $content);
-        $stmt->execute();
-        $stmt->close();
-        header('Location: feed.php');
-        exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_post_id'])) {
+    $delete_id = intval($_POST['delete_post_id']);
+
+    $stmt = $mysqli->prepare("DELETE FROM posts WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $delete_id, $user_id);
+    $stmt->execute();
+
+    header("Location: feed.php"); // reload per evitare doppio submit
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['content'])) {
+    $content = trim($_POST['content']);
+    $stmt = $mysqli->prepare("INSERT INTO posts (user_id, content) VALUES (?, ?)");
+    if (!$stmt) {
+        die("Prepare fallito: " . $mysqli->error);
+    }
+    $stmt->bind_param("is", $user_id, $content);
+    if (!$stmt->execute()) {
+        $error = "Errore nel salvare il post: " . $stmt->error;
     } else {
-        $error = 'Il post non può essere vuoto.';
+        header("Location: feed.php");
+        exit;
     }
 }
 
-$result = $mysqli->query('SELECT post_id, user_name, post_comment FROM Post ORDER BY post_id DESC');
 $posts = [];
+$result = $mysqli->query("
+    SELECT posts.id AS post_id, posts.content AS post_comment, posts.user_id, users.username AS user_name
+    FROM posts
+    JOIN users ON posts.user_id = users.id
+    ORDER BY posts.id DESC
+");
+
 if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $posts[] = $row;
-    }
-    $result->free();
+    $posts = $result->fetch_all(MYSQLI_ASSOC);
 }
-$mysqli->close();
 ?>
+
 <!doctype html>
 <html lang="it">
 <head>
@@ -63,7 +85,7 @@ $mysqli->close();
 
     <h5>Feed</h5>
     <?php if (empty($posts)): ?>
-        <div class="alert alert-info">Nessun post ancora.</div>
+        <div class="alert alert-info">Ancora nessun post.</div>
     <?php else: ?>
         <?php foreach ($posts as $p): ?>
             <div class="card mb-3">
@@ -72,6 +94,13 @@ $mysqli->close();
                         <?=htmlspecialchars($p['user_name'])?> (ID #<?=$p['post_id']?>)
                     </h6>
                     <p class="card-text"><?=nl2br(htmlspecialchars($p['post_comment']))?></p>
+
+                    <?php if ($p['user_id'] == $user_id): ?>
+                        <form method="post" style="display:inline;">
+                            <input type="hidden" name="delete_post_id" value="<?= $p['post_id'] ?>">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>

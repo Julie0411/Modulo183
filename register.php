@@ -45,27 +45,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="bg-light">
 <div class="container py-5">
-    <h3>Registrati</h3>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3>Registrati</h3>
 
-    <?php if (!empty($error)): ?>
-        <div class="alert alert-danger"><?=htmlspecialchars($error)?></div>
-    <?php endif; ?>
+                    <?php if (!empty($error)): ?>
+                        <div class="alert alert-danger"><?=htmlspecialchars($error)?></div>
+                    <?php endif; ?>
+                    <form method="post">
+                        <div class="mb-3">
+                            <label>Username</label>
+                            <input class="form-control" name="username" required maxlength="50">
+                        </div>
 
-    <form method="post">
-        <div class="mb-3">
-            <label>Username</label>
-            <input class="form-control" name="username" required maxlength="50">
+                        <div class="mb-3">
+                            <label>Password</label>
+                            <input class="form-control" name="password" required type="password">
+                        </div>
+
+                        <button class="btn btn-primary" href="feed.php">Registrati</button>
+                    </form>
+
+                    <a href="index.php" class="btn btn-link">Vai al login</a>
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label>Password</label>
-            <input class="form-control" name="password" required type="password">
-        </div>
-
-        <button class="btn btn-primary" href="feed.php">Registrati</button>
-    </form>
-
-    <a href="index.php" class="btn btn-link">Vai al login</a>
+    </div>
 </div>
 </body>
 </html>

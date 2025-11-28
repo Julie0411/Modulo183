@@ -50,6 +50,7 @@ $result = $mysqli->query("
     ORDER BY posts.id DESC
 ");
 
+
 if ($result) {
     $posts = $result->fetch_all(MYSQLI_ASSOC);
 }

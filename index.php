@@ -1,47 +1,45 @@
 <?php
-require 'db.php';
-
+require_once 'db.php';
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$mysqli = db_connect();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = trim(isset($_POST['password']) ? $_POST['password'] : '');
 
-    if ($username === '' || $password === '') {
-        $error = 'Compila tutti i campi.';
-    } else {
-        $mysqli = db_connect();
+    if ($username !== '' && $password !== '') {
 
-        $stmt = $mysqli->prepare("SELECT id, password_hash FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
+        $password_hash = hash('sha256', $password);
+
+        $stmt = $mysqli->prepare('SELECT id, password_hash FROM users WHERE username = ?');
+        $stmt->bind_param('s', $username);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows === 1) {
 
-            $stmt->bind_result($id, $password_hash);
+            $stmt->bind_result($id, $db_hash);
             $stmt->fetch();
 
-            if (password_verify($password, $password_hash)) {
-
+            if ($password_hash === $db_hash) {
                 $_SESSION['user_id'] = $id;
                 $_SESSION['username'] = $username;
-
-                header("Location: feed.php");
+                header('Location: feed.php');
                 exit;
-
             } else {
-                $error = "Password errata.";
+                $error = 'Password errata.';
             }
-
         } else {
-            $error = "Utente non trovato.";
+            $error = 'Utente non trovato.';
         }
+
+        $stmt->close();
+    } else {
+        $error = 'Inserisci username e password.';
     }
 }
 ?>
-
 
 <!doctype html>
 <html lang="it">
@@ -72,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </div>
               <button type="submit" class="btn btn-primary">Entra</button>
             </form>
+              <a href="register.php" class="btn btn-link">Registrati</a>
           </div>
         </div>
       </div>

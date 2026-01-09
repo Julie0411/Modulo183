@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username !== '' && $password !== '') {
 
-        $password_hash = hash('sha256', $password);
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
         $stmt = $mysqli->prepare('SELECT id FROM users WHERE username = ?');
         $stmt->bind_param('s', $username);

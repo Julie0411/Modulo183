@@ -10,8 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username !== '' && $password !== '') {
 
-        $password_hash = hash('sha256', $password);
-
         $stmt = $mysqli->prepare('SELECT id, password_hash FROM users WHERE username = ?');
         $stmt->bind_param('s', $username);
         $stmt->execute();
@@ -22,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_result($id, $db_hash);
             $stmt->fetch();
 
-            if ($password_hash === $db_hash) {
+            if (password_verify($password, $db_hash)) {
                 $_SESSION['user_id'] = $id;
                 $_SESSION['username'] = $username;
                 header('Location: feed.php');
